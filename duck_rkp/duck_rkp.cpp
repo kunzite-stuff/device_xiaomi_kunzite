@@ -2,9 +2,17 @@
  * Native CSR framing and KeymasterUtils ABI adapted from eltavine/Duck-ToolBox
  * 8d6a2470b1033c35946b72bb1f9bc56d8947dd63, including aviraxp's native V1 contribution.
  * Copyright (c) 2026 Eltavine (尉迟栩澜)
+ *
+ * Fix (validated on SM6475 / kunzite): vendorRequest() talks to the TA through
+ * KeymasterUtils::init + KeymasterUtils::sendCmd, the same path the stock
+ * libqtikeymint.so uses. The request and the response live in the shared
+ * 0xa000-byte buffer created by the KeymasterUtils constructor. The previous
+ * raw send_cmd() call with separate heap vectors made the TA answer 16
+ * (native_rejected) and the QSEECom driver return -22 (native_transport).
  */
 #include <arpa/inet.h>
 #include <aidl/vendor/evo/duckrkp/BnDuckRkp.h>
+#include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <android/binder_ibinder.h>
@@ -21,6 +29,7 @@
 #include <chrono>
 #include <climits>
 #include <cstring>
+#include <memory>
 #include <set>
 #include <thread>
 #include <vector>
@@ -126,40 +135,79 @@ std::vector<uint8_t> encodeVendorRequest(uint32_t backend, const std::vector<uin
     return request;
 }
 
+// Same layout as keymaster_blob_t: { const uint8_t* data; size_t data_length; }
+struct Blob {
+    const uint8_t* data;
+    size_t size;
+};
+
 void vendorRequest(int fd, uint32_t backend, const std::vector<uint8_t>& payload) {
     void* library = dlopen(kLibrary, RTLD_NOW | RTLD_LOCAL);
     if (!library) return reply(fd, UNAVAILABLE, 0);
+
     using Constructor = void (*)(void*, int);
     using Destructor = void (*)(void*);
-    using Send = int (*)(void*, void*, uint32_t, void*, uint32_t);
+    using Init = void (*)(void*, uint32_t, Blob*);
+    using SendCmd = int (*)(void*, const Blob*, Blob*);
+
     auto construct = reinterpret_cast<Constructor>(dlsym(library,
             "_ZN14keymasterutils14KeymasterUtilsC1E26keymaster_security_level_t"));
     auto destroy = reinterpret_cast<Destructor>(dlsym(library,
             "_ZN14keymasterutils14KeymasterUtilsD1Ev"));
-    auto sendCommand = reinterpret_cast<Send>(dlsym(library,
-            "_ZN14keymasterutils14KeymasterUtils8send_cmdEPvjS1_j"));
-    if (!construct || !destroy || !sendCommand) return reply(fd, UNAVAILABLE, 1);
+    auto init = reinterpret_cast<Init>(dlsym(library,
+            "_ZN14keymasterutils14KeymasterUtils4initEjP16keymaster_blob_t"));
+    auto sendCmd = reinterpret_cast<SendCmd>(dlsym(library,
+            "_ZN14keymasterutils14KeymasterUtils7sendCmdERK16keymaster_blob_tPS1_"));
+    if (!construct || !destroy || !init || !sendCmd) return reply(fd, UNAVAILABLE, 1);
+
     // Observed vendor ABI: 0x40-byte object, security level 1 (TEE).
     alignas(16) std::array<uint8_t, 0x40> object{};
     construct(object.data(), 1);
+
+    // request = [4-byte little-endian command id][CBOR body]
     auto request = encodeVendorRequest(backend, payload);
-    std::vector<uint8_t> response(kBufferSize);
-    int32_t sentinel = INT32_MIN;
-    memcpy(response.data(), &sentinel, 4);
-    int status = sendCommand(object.data(), request.data(), request.size(),
-                             response.data(), response.size());
+    uint32_t command;
+    memcpy(&command, request.data(), 4);
+    command = le32toh(command);
+    const uint8_t* body = request.data() + 4;
+    size_t bodySize = request.size() - 4;
+
+    // init() zeroes the shared 0xa000 buffer, writes the command id at its start
+    // and returns a blob pointing right after it.
+    Blob req{};
+    init(object.data(), command, &req);
+    if (!req.data || bodySize > req.size) {
+        destroy(object.data());
+        dlclose(library);
+        return reply(fd, INVALID_REQUEST, 2);
+    }
+    memcpy(const_cast<uint8_t*>(req.data), body, bodySize);
+    req.size = bodySize;
+
+    // sendCmd() puts the response in the same shared buffer and parses the
+    // [status][size][data] header, returning only the data.
+    Blob resp{};
+    int status = sendCmd(object.data(), &req, &resp);
+    if (status == 0) {
+        LOG(INFO) << "duck_rkp: cmd=0x" << std::hex << command << std::dec
+                  << " body=" << bodySize << " resp=" << resp.size;
+    } else {
+        LOG(WARNING) << "duck_rkp: cmd=0x" << std::hex << command << std::dec
+                     << " body=" << bodySize << " status=" << status;
+    }
+
+    // The response points into the shared buffer: copy it BEFORE destroy().
+    std::vector<uint8_t> out;
+    if (status == 0 && resp.data && resp.size > 0 && resp.size <= kBufferSize - 8) {
+        out.assign(resp.data, resp.data + resp.size);
+    }
     destroy(object.data());
     dlclose(library);
-    if (status != 0) return reply(fd, TRANSPORT, status);
-    int32_t result;
-    uint32_t size;
-    memcpy(&result, response.data(), 4);
-    memcpy(&size, response.data() + 4, 4);
-    result = static_cast<int32_t>(le32toh(static_cast<uint32_t>(result)));
-    size = le32toh(size);
-    if (result != 0) return reply(fd, REJECTED, result);
-    if (size == 0 || size > kBufferSize - 8) return reply(fd, TRANSPORT, 0);
-    reply(fd, OK, 0, {response.begin() + 8, response.begin() + 8 + size});
+
+    if (status < 0) return reply(fd, TRANSPORT, status);   // ioctl error (e.g. -22)
+    if (status > 0) return reply(fd, REJECTED, status);    // TA status (e.g. 16)
+    if (out.empty()) return reply(fd, TRANSPORT, 0);
+    reply(fd, OK, 0, out);
 }
 
 void serve(int fd) {
@@ -223,6 +271,7 @@ int selfTest() {
     if (encodeVendorRequest(2, v2Payload) != expectedV2) return 9;
     return 0;
 }
+
 std::vector<uint8_t> errorReply(Status status, int32_t detail = 0) {
     std::array<uint32_t, 3> header{htonl(status), htonl(static_cast<uint32_t>(detail)), 0};
     auto* data = reinterpret_cast<const uint8_t*>(header.data());
