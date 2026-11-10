@@ -6,4 +6,7 @@
 <resources>
     <!-- Default for Settings.Global.DEVICE_NAME $1=MODEL-->
     <string name="def_device_name_simple">REDMI Note 15</string>
+
+    <!-- Set default screen off timeout -->
+    <integer name="def_screen_off_timeout">30000</integer>
 </resources>
