@@ -6,19 +6,17 @@
 <resources>
     <!-- status bar -->
     <dimen name="status_bar_padding_top">12.0px</dimen>
-    <dimen name="status_bar_padding_start">4.0px</dimen>
-    <dimen name="status_bar_padding_end">0.0px</dimen>
-    <dimen name="status_bar_icons_padding_start">3.0px</dimen>
-    <dimen name="status_bar_icons_padding_end">4.0px</dimen>
+    <dimen name="status_bar_padding_start">-2.0px</dimen>
+    <dimen name="status_bar_padding_end">-2.0px</dimen>
+    <dimen name="status_bar_icons_padding_start">0.0px</dimen>
+    <dimen name="status_bar_icons_padding_end">1.0px</dimen>
     <dimen name="status_bar_clock_starting_padding">0.0px</dimen>
-    <dimen name="status_bar_clock_end_padding">0.0px</dimen>
+    <dimen name="status_bar_clock_end_padding">1.0px</dimen>
     <dimen name="status_bar_left_clock_starting_padding">0.0px</dimen>
-    <dimen name="hover_system_icons_container_padding_start">2.0px</dimen>
-    <dimen name="hover_system_icons_container_padding_end">2.0px</dimen>
 
     <!-- keyguard / lockscreen -->
     <dimen name="status_bar_header_height_keyguard">@*android:dimen/status_bar_height_portrait</dimen>
-    <dimen name="keyguard_carrier_text_margin">48.0px</dimen>
+    <dimen name="keyguard_carrier_text_margin">57.0px</dimen>
     <dimen name="keyguard_indication_margin_bottom">341.25px</dimen>
 
     <!-- rounded corners -->
