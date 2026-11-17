@@ -11,6 +11,9 @@ vendor.camera. u:object_r:vendor_camera_prop:s0
 vendor.camera.sensor. u:object_r:vendor_camera_xiaomi_prop:s0
 vendor.camera.clientname u:object_r:vendor_packname_prop:s0
 
+# Citsensor
+persist.vendor.sensor.mischeck u:object_r:vendor_mischeck_prop:s0
+
 # Fingerprint
 persist.vendor.fpc. u:object_r:vendor_fp_prop:s0
 persist.vendor.goodix. u:object_r:vendor_fp_prop:s0
