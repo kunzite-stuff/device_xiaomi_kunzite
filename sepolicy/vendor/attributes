@@ -8,6 +8,9 @@ attribute hal_aidl_dms;
 attribute hal_aidl_dms_client;
 attribute hal_aidl_dms_server;
 
+# Hypsys
+attribute hal_hypsys_vendor_service_client;
+
 # Mlipay
 attribute hal_mlipay;
 attribute hal_mlipay_server;
