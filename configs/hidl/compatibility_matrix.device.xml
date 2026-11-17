@@ -50,6 +50,20 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>xiaomi.system.hypsys.common</name>
+        <interface>
+            <name>IHypSysSsi</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>xiaomi.system.hypsys.common</name>
+        <interface>
+            <name>IHypSysSsiIntl</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>vendor.tms.tmsnfc_aidl</name>
         <interface>
             <name>ITmsNfc</name>
