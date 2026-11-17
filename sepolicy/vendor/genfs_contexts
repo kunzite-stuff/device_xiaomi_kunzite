@@ -1,3 +1,6 @@
+# Battery
+genfscon sysfs /devices/platform/soc/soc:qcom,pmic_glink/soc:qcom,pmic_glink:qcom,ucsi/typec u:object_r:sysfs_typec:s0
+
 # Camera
 genfscon sysfs /devices/platform/soc/soc:qcom,camera-flash@0/leds/led:torch/brightness u:object_r:sysfs_flash_name:s0
 
