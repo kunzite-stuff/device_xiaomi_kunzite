@@ -20,6 +20,10 @@ vendor.evo.duckrkp.IDuckRkp/default    u:object_r:hal_duck_rkp_service:s0
 # Fingerprint
 vendor.xiaomi.hardware.fx.tunnel.IMiFxTunnel/default                    u:object_r:vendor_hal_fingerprint_service_xiaomi:s0
 
+# HypSys
+xiaomi.system.hypsys.common.IHypSysSsi/default                u:object_r:hal_hypsys_vendor_service:s0
+xiaomi.system.hypsys.common.IHypSysSsiIntl/default            u:object_r:hal_hypsys_vendor_service:s0
+
 # Mlipay
 vendor.xiaomi.hardware.mlipay.IMlipayService/default        u:object_r:hal_mlipay_service:s0
 
