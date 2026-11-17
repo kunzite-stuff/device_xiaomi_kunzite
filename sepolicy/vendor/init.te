@@ -6,6 +6,7 @@ set_prop(vendor_init, vendor_thermal_normal_prop)
 set_prop(vendor_init, vendor_touchfeature_prop)
 set_prop(vendor_init, vendor_camera_prop)
 set_prop(vendor_init, vendor_camera_sensor_prop)
+set_prop(vendor_init, vendor_mischeck_prop)
 
 allow vendor_init minidump_data_file:dir create_dir_perms;
 allow vendor_init minidump_data_file:file create_file_perms;
