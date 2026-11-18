@@ -109,6 +109,9 @@
 # HypSys
 /vendor/bin/hw/xiaomi\.system\.hypsys\.common-dummy    u:object_r:hal_hypsys_vendor_exec:s0
 
+# Misys
+/vendor/bin/hw/vendor\.xiaomi\.hardware\.misys-dummy    u:object_r:hal_misys_vendor_default_exec:s0
+
 # MliPay
 /(odm|vendor/odm|system/vendor)/bin/mlipayd u:object_r:hal_mlipay_default_exec:s0
 
