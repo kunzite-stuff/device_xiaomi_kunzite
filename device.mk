@@ -243,6 +243,10 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     vendor.xiaomi.hardware.micharge-service-dummy
 
+# Misys
+PRODUCT_PACKAGES += \
+    vendor.xiaomi.hardware.misys-dummy
+
 # Memtrack
 PRODUCT_PACKAGES += \
     vendor.qti.hardware.memtrack-service

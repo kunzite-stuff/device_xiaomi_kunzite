@@ -1,0 +1,6 @@
+service vendor.xiaomi.hardware.misys-dummy /vendor/bin/hw/vendor.xiaomi.hardware.misys-dummy
+    class hal
+    user system
+    group system
+    interface aidl vendor.xiaomi.hardware.misys.common.IMiSysImpl/default
+    interface aidl vendor.xiaomi.hardware.misys.common.IHypSysIntl/default
