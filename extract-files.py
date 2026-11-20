@@ -4,6 +4,9 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+import os
+import tempfile
+
 from extract_utils.fixups_blob import (
     BlobFixupCtx,
     File,
@@ -24,6 +27,14 @@ from extract_utils.tools import (
 from extract_utils.utils import (
     run_cmd,
 )
+
+# patchelf is used to rename the C++ ABI imports of libSNPE.so.
+# Use the path from extract_utils when available, otherwise fall back to
+# the patchelf found in PATH.
+try:
+    from extract_utils.tools import patchelf_path
+except ImportError:
+    patchelf_path = 'patchelf'
 
 namespace_imports = [
     'device/xiaomi/kunzite',
@@ -78,6 +89,46 @@ def blob_fixup_graphic_buffer_size(
                 f.seek(int(offset[:-1], 16))
                 f.write(b'\x00\xa6\x81\x52')  # AArch64 mov w0, #0xd30
 
+# C++ ABI symbols imported by libSNPE.so that must be forwarded to the
+# libc++_shared.so shipped with it (see compat/snpe_cxxabi.c).
+# Keep this list identical to SNPE_CXXABI_SYMBOLS in snpe_cxxabi.c.
+SNPE_CXXABI_SYMBOLS = [
+    '__gxx_personality_v0',
+    '__cxa_allocate_exception',
+    '__cxa_free_exception',
+    '__cxa_throw',
+    '__cxa_rethrow',
+    '__cxa_begin_catch',
+    '__cxa_end_catch',
+    '__cxa_bad_cast',
+    '_ZSt17current_exceptionv',
+    '_ZSt17rethrow_exceptionSt13exception_ptr',
+    '_ZSt18uncaught_exceptionv',
+    '_ZNSt13exception_ptrC1ERKS_',
+    '_ZNSt13exception_ptrD1Ev',
+    '_ZNSt13exception_ptraSERKS_',
+    '_Znwm',
+    '_Znam',
+]
+
+def blob_fixup_snpe_cxxabi(
+    ctx: BlobFixupCtx,
+    file: File,
+    file_path: str,
+    *args,
+    **kwargs,
+):
+    # Rename the imports to snpe_cxxabi_<name> so that they bind to
+    # libsnpe_cxxabi_shim.so instead of the platform libc++.so
+    with tempfile.NamedTemporaryFile('w', suffix='.map', delete=False) as f:
+        for sym in SNPE_CXXABI_SYMBOLS:
+            f.write(f'{sym} snpe_cxxabi_{sym}\n')
+        map_path = f.name
+    try:
+        run_cmd([patchelf_path, '--rename-dynamic-symbols', map_path, file_path])
+    finally:
+        os.unlink(map_path)
+
 blob_fixups: blob_fixups_user_type = {
     'odm/bin/hw/vendor.xiaomi.sensor.citsensorservice.aidl': blob_fixup()
         .replace_needed(
@@ -127,6 +178,10 @@ blob_fixups: blob_fixups_user_type = {
         ),
     'vendor/lib64/libcameraopt.so': blob_fixup()
         .add_needed('libprocessgroup_shim.so'),
+    # Forward the C++ ABI imports of libSNPE to its own libc++_shared.so
+    'vendor/lib64/libSNPE.so': blob_fixup()
+        .call(blob_fixup_snpe_cxxabi)
+        .add_needed('libsnpe_cxxabi_shim.so'),
     (
         'vendor/lib64/libMiPhotoFilter.so',
         'vendor/lib64/libTrueSight.so',
