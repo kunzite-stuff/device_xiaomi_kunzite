@@ -1017,11 +1017,16 @@ vendor/lib64/vendor.qti.diaghal@1.0.so;MODULE_SUFFIX=_vendor
 vendor/lib64/libhdr_tm.so
 
 # Display (HWC)
+odm/lib64/libeyecare.so
+odm/lib64/libmi-stc-HW-modulate.so
+odm/lib64/libmiXmlParser.so
 vendor/bin/qdcmss
 vendor/bin/qguard
 vendor/etc/init/qdcmss.rc
 vendor/etc/init/qguard.rc
 vendor/etc/qguard.json
+vendor/etc/snapdragon_color_libs_config.xml
+vendor/lib64/libcolor-default.so
 vendor/lib64/libdigital-dimming.so
 vendor/lib64/libdpps.so
 vendor/lib64/libmemutils.so
@@ -1040,7 +1045,6 @@ vendor/bin/ppd
 vendor/etc/init/feature_enabler_client.rc
 vendor/etc/init/vendor.qti.hardware.display.color-service.rc
 vendor/lib64/libdisp-aba.so
-vendor/lib64/vendor.display.postproc@1.0.so
 
 # Display (SDM)
 vendor/etc/clstc_config_library.xml
