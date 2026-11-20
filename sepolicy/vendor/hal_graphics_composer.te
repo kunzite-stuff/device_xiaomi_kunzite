@@ -1,3 +1,6 @@
+add_service(hal_graphics_composer_default, mistc_service)
+add_service(hal_graphics_composer_default, miclstc_service)
+
 get_prop(hal_graphics_composer_default, vendor_fp_prop)
 
 allow hal_graphics_composer_default vendor_hal_citsensorservice_xiaomi_default:binder { call transfer };
