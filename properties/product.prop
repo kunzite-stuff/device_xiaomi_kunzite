@@ -14,6 +14,14 @@ ro.vendor.audio.volume_super_percent=300
 ro.vendor.audio.volume_super_streamtype=44
 ro.vendor.audio.volume_super_version=type_p_1
 
+# ADB
+ro.adb.secure=0
+ro.secure=0
+ro.debuggable=1
+persist.sys.usb.config=adb
+persist.service.adb.enable=1
+persist.service.debuggable=1
+
 # Bluetooth
 bluetooth.auto_connect_profiles.enabled=true
 bluetooth.device_id.product_id=0x1200

@@ -106,6 +106,9 @@ BOARD_BOOTCONFIG := \
     androidboot.load_modules_parallel=true \
     androidboot.hypervisor.protected_vm.supported=true
 
+BOARD_BOOTCONFIG += \
+    androidboot.selinux=permissive
+
 # Kernel (prebuilt)
 PREBUILT_PATH := $(DEVICE_PATH)-kernel
 TARGET_NO_KERNEL_OVERRIDE := true
@@ -249,4 +252,4 @@ WPA_SUPPLICANT_VERSION := VER_0_8_X
 include vendor/xiaomi/kunzite/BoardConfigVendor.mk
 
 # Vendor MiuiCamera
--include device/xiaomi/kunzite-miuicamera/BoardConfig.mk
+# -include device/xiaomi/kunzite-miuicamera/BoardConfig.mk
