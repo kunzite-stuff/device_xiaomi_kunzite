@@ -11,6 +11,8 @@
 #define TORCH_MAX_BRIGHTNESS  "max_brightness"
 #define SWITCH_ON             255
 
+#define TORCH_LIMIT           300
+
 static std::string kTorch0Path =
     "/sys/devices/platform/soc/c42d000.qcom,spmi/spmi-0/0-05/"
     "c42d000.qcom,spmi:qcom,pm6150l@5:qcom,leds@d300/leds/led:torch_0";
@@ -51,7 +53,7 @@ int32_t getTorchDefaultStrengthLevelExt() {
 }
 
 int32_t getTorchMaxStrengthLevelExt() {
-    return 500;
+    return TORCH_LIMIT;
 }
 
 int32_t getTorchStrengthLevelExt() {
@@ -59,6 +61,10 @@ int32_t getTorchStrengthLevelExt() {
 }
 
 void setTorchStrengthLevelExt(int32_t torchStrength, bool enabled) {
+
+    if (torchStrength > TORCH_LIMIT) torchStrength = TORCH_LIMIT;
+    if (torchStrength < 0) torchStrength = 0;
+
     set(kSwitch0Path + "/" + TORCH_BRIGHTNESS, 0);
     set(kSwitch1Path + "/" + TORCH_BRIGHTNESS, 0);
 
